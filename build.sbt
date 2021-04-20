@@ -1,4 +1,4 @@
-val akkaVersion = "2.6.13"
+val akkaVersion = "2.6.14"
 val akkaHttpVersion = "10.2.3"
 val json4sVersion = "3.7.0-M6"
 val alpakka = "2.0.2"
