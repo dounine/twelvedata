@@ -6,7 +6,14 @@ import com.dounine.tractor.model.types.service.IntervalStatus
 import org.json4s.JsonAST.{JField, JLong, JObject, JString}
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.jackson.Serialization
-import org.json4s.{CustomSerializer, DefaultFormats, Formats, jackson}
+import org.json4s.{
+  CustomSerializer,
+  DefaultFormats,
+  Formats,
+  JDouble,
+  JInt,
+  jackson
+}
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, LocalDateTime}
@@ -28,7 +35,11 @@ object JsonSuport {
           },
           {
             case dateTime: LocalDateTime =>
-              JString(dateTime.toString)
+              JString(
+                dateTime.format(
+                  DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                )
+              )
           }
         )
       )
@@ -42,7 +53,9 @@ object JsonSuport {
           },
           {
             case date: LocalDate =>
-              JString(date.toString)
+              JString(
+                date.toString
+              )
           }
         )
       )
@@ -52,6 +65,9 @@ object JsonSuport {
         (
           {
             case JString(value) => BigDecimal(value)
+            case JDouble(value) => BigDecimal(value.toString)
+            case JLong(value)   => BigDecimal(value.toString)
+            case JInt(value)    => BigDecimal(value.toString)
           },
           {
             case value: BigDecimal =>
@@ -107,6 +123,6 @@ object JsonSuport {
     BigDecimalSerializer +
     FiniteDurationSerializer ++ Seq(
     ResponseCode,
-    IntervalStatus,
+    IntervalStatus
   ).map(new EnumNameSerializer(_))
 }

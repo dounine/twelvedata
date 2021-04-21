@@ -43,4 +43,23 @@ object StockTimeSerieModel {
       values: Option[List[Info]]
   ) extends BaseSerializer
 
+  final case class FutunItem(
+      k: Long,
+      o: BigDecimal,
+      c: BigDecimal,
+      h: BigDecimal,
+      l: BigDecimal,
+      v: BigDecimal
+  ) extends BaseSerializer
+
+  final case class FutunData(
+      list: Seq[FutunItem]
+  ) extends BaseSerializer
+
+  final case class FutunResponse(
+      code: Int,
+      message: String,
+      data: FutunData
+  ) extends BaseSerializer
+
 }

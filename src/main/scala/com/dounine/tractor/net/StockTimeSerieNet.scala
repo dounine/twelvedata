@@ -11,6 +11,7 @@ import com.dounine.tractor.tools.akka.ConnectSettings
 import com.dounine.tractor.tools.json.JsonParse
 import org.slf4j.LoggerFactory
 
+import java.util.regex.Pattern
 import scala.concurrent.Future
 
 class StockTimeSerieNet(system: ActorSystem[_])
@@ -68,4 +69,61 @@ class StockTimeSerieNet(system: ActorSystem[_])
       }
   }
 
+  override def futuQuery(
+      symbol: String
+  ): Future[StockTimeSerieModel.FutunResponse] = {
+    futuStockIdQuery(symbol)
+      .filter(_.isDefined)
+      .flatMap(stockId => {
+        http
+          .singleRequest(
+            request = HttpRequest(
+              method = HttpMethods.GET,
+              uri =
+                s"https://www.futunn.com/quote-api/get-kline?stock_id=${stockId.get}&market_type=2&type=2"
+            ),
+            settings = ConnectSettings.settings2(system)
+          )
+          .flatMap {
+            case HttpResponse(_, _, entity, _) => {
+              logger.info("query success")
+              entity.dataBytes
+                .runFold(ByteString(""))(_ ++ _)
+                .map(_.utf8String)
+                .map(_.jsonTo[StockTimeSerieModel.FutunResponse])
+            }
+            case msg @ _ =>
+              logger.error(s"query error $msg")
+              Future.failed(new Exception(s"request error $msg"))
+          }
+      })
+  }
+
+  override def futuStockIdQuery(symbol: String): Future[Option[String]] = {
+    http
+      .singleRequest(
+        request = HttpRequest(
+          method = HttpMethods.GET,
+          uri = s"https://www.futunn.com/stock/${symbol}"
+        ),
+        settings = ConnectSettings.settings2(system)
+      )
+      .flatMap {
+        case HttpResponse(_, _, entity, _) => {
+          logger.info("query success")
+          entity.dataBytes
+            .runFold(ByteString(""))(_ ++ _)
+            .map(_.utf8String)
+            .map(html => {
+              val m = Pattern.compile(""""stock_id":[0-9]+""").matcher(html)
+              if (m.find()) {
+                Option(m.group().split(":").last)
+              } else None
+            })
+        }
+        case msg @ _ =>
+          logger.error(s"query error $msg")
+          Future.failed(new Exception(s"request error $msg"))
+      }
+  }
 }

@@ -17,4 +17,12 @@ trait StockTimeSerieNetApi {
       format: String = "JSON"
   ): Future[StockTimeSerieModel.Response]
 
+  def futuQuery(
+      symbol: String
+  ): Future[StockTimeSerieModel.FutunResponse]
+
+  def futuStockIdQuery(
+      symbol: String
+  ): Future[Option[String]]
+
 }

@@ -2,6 +2,7 @@ val akkaVersion = "2.6.14"
 val akkaHttpVersion = "10.2.3"
 val json4sVersion = "3.7.0-M6"
 val alpakka = "2.0.2"
+val elastic4sVersion = "7.12.0"
 
 lazy val app = (project in file("."))
   .enablePlugins(DockerPlugin, JavaServerAppPackaging)
@@ -16,6 +17,7 @@ lazy val app = (project in file("."))
     dockerEntrypoint := Seq("/opt/docker/bin/twelvedata"),
     parallelExecution in Test := false,
     libraryDependencies ++= Seq(
+      "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % elastic4sVersion,
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "com.github.pureconfig" %% "pureconfig" % "0.12.3",
       "eu.timepit" %% "refined" % "0.9.20",
@@ -65,6 +67,7 @@ lazy val app = (project in file("."))
       "org.scalatestplus" %% "mockito-3-4" % "3.2.5.0" % Test,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
       "org.scalatest" %% "scalatest" % "3.1.2" % Test,
-      "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8" % Test
+      "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8" % Test,
+      "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % Test
     )
   )

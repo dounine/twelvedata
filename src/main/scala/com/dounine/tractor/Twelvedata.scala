@@ -11,7 +11,7 @@ import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.cluster.scaladsl.ClusterHttpManagementRoutes
 import akka.management.scaladsl.AkkaManagement
 import akka.stream.SystemMaterializer
-import com.dounine.tractor.behaviors.stock.StockBehavior
+import com.dounine.tractor.behaviors.stock.{StockBehavior, StockFutunBehavior}
 import com.dounine.tractor.model.types.service.IntervalStatus
 import com.dounine.tractor.router.routers.{
   BindRouters,
@@ -39,33 +39,21 @@ object Twelvedata {
     AkkaManagement(system).start()
     ClusterBootstrap(system).start()
 
-    sharding.init(Entity(StockBehavior.typeKey)(context => StockBehavior()))
-    val stockBehavior =
-      sharding.entityRefFor(StockBehavior.typeKey, StockBehavior.typeKey.name)
-    stockBehavior.tell(
-      StockBehavior.Run(
-        list = Seq(
-          ("AAPL", IntervalStatus.min5),
-          ("AAPL", IntervalStatus.min15),
-          ("AAPL", IntervalStatus.min30),
-          ("AAPL", IntervalStatus.hour1),
-          ("AAPL", IntervalStatus.day1)
-        )
-      )
+    sharding.init(
+      Entity(StockFutunBehavior.typeKey)(context => StockFutunBehavior())
     )
 
-    stockBehavior.tell(
-      StockBehavior.Run(
-        list = Seq(
-          ("AAPL", IntervalStatus.min5),
-          ("AAPL", IntervalStatus.min15),
-          ("AAPL", IntervalStatus.min30),
-          ("AAPL", IntervalStatus.hour1),
-          ("AAPL", IntervalStatus.day1)
-        )
+    val stockFutuBehavior =
+      sharding.entityRefFor(
+        StockFutunBehavior.typeKey,
+        StockFutunBehavior.typeKey.name
+      )
+
+    stockFutuBehavior.tell(
+      StockFutunBehavior.Run(
+        list = Seq.empty
       )
     )
-
 
     val cluster: Cluster = Cluster.get(system)
     val managementRoutes: Route = ClusterHttpManagementRoutes(cluster)
