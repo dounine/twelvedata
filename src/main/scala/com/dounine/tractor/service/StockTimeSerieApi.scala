@@ -25,4 +25,12 @@ trait StockTimeSerieApi {
       end: LocalDateTime
   ): Future[Seq[StockTimeSerieModel.DBInfo]]
 
+  def futunQuery(
+      symbol: String,
+      interval: IntervalStatus,
+      start: String,
+      end: String,
+      size: Int
+  ): Future[(Boolean, Seq[StockTimeSerieModel.SimpleInfo])]
+
 }

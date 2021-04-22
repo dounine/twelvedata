@@ -35,6 +35,15 @@ object StockTimeSerieModel {
       volume: BigDecimal
   ) extends BaseSerializer
 
+  final case class SimpleInfo(
+      t: LocalDateTime,
+      o: BigDecimal,
+      h: BigDecimal,
+      l: BigDecimal,
+      c: BigDecimal,
+      v: BigDecimal
+  ) extends BaseSerializer
+
   final case class Response(
       meta: Option[Meta],
       code: Option[Int],

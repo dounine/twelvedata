@@ -123,6 +123,8 @@ object StockFutunBehavior extends ActorSerializerSuport {
                               .ofEpochMilli(item.k * 1000L)
                               .atZone(ZoneId.systemDefault())
                               .toLocalDateTime
+                              .toLocalDate
+                              .atStartOfDay()
                             val keyString = s"${symbol}|${interval}|${datetime
                               .format(timeFormat)}"
                             val md5Key =

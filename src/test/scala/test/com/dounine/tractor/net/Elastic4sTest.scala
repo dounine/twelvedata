@@ -13,7 +13,13 @@ import com.dounine.tractor.store.{EnumMappers, StockTimeSerieTable}
 import com.dounine.tractor.tools.akka.db.DataSource
 import com.dounine.tractor.tools.json.JsonParse
 import com.sksamuel.elastic4s.http.JavaClient
-import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, Indexable}
+import com.sksamuel.elastic4s.{
+  ElasticClient,
+  ElasticProperties,
+  Hit,
+  HitReader,
+  Indexable
+}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -21,10 +27,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import slick.jdbc.MySQLProfile.api._
 import slick.lifted.TableQuery
 
+import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, LocalDateTime}
 import java.time.temporal.ChronoUnit
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.util.{Success, Try}
 
 class Elastic4sTest
     extends ScalaTestWithActorTestKit(
@@ -51,8 +59,9 @@ class Elastic4sTest
     with JsonParse {
 
   "elastic test" should {
-    "4s" in {
-      val props = ElasticProperties("http://dev1:9200")
+    "4s" ignore {
+      val props =
+        ElasticProperties(system.settings.config.getString("app.es.url"))
       val client = ElasticClient(JavaClient(props))
 
       import com.sksamuel.elastic4s.ElasticDsl._
@@ -115,6 +124,67 @@ class Elastic4sTest
 //          )
 //        )
 //      }.await
+    }
+
+    "query" in {
+      val props =
+        ElasticProperties(system.settings.config.getString("app.es.url"))
+      val client = ElasticClient(JavaClient(props))
+      val timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+      import com.sksamuel.elastic4s.ElasticDsl._
+      implicit object CharacterHitReader
+          extends HitReader[StockTimeSerieModel.Info] {
+        override def read(hit: Hit): Try[StockTimeSerieModel.Info] = {
+          val source = hit.sourceAsMap
+          Success(
+            StockTimeSerieModel.Info(
+              datetime =
+                LocalDateTime.parse(source("datetime").toString, timeFormat),
+              open = BigDecimal(source("open").toString),
+              high = BigDecimal(source("high").toString),
+              close = BigDecimal(source("close").toString),
+              low = BigDecimal(source("low").toString),
+              volume = BigDecimal(source("volume").toString)
+            )
+          )
+        }
+      }
+
+      val resp = client
+        .execute(
+          search("stock")
+            .bool(
+              boolQuery().must(
+                termQuery("symbol", "AAPL-CN"),
+                termQuery("interval", "1day"),
+                rangeQuery("datetime").gte("2020-01-01").lt("2020-01-01")
+              )
+            )
+            //            .postFilter(
+            //            )
+            .sortByFieldDesc("datetime")
+        )
+        .await
+
+      println(
+        client.show(
+          search("stock")
+            .bool(
+              boolQuery().must(
+                termQuery("symbol", "AAPL-CN"),
+                termQuery("interval", "1day"),
+                rangeQuery("datetime").gte("2020-01-01").lt("2020-01-01")
+              )
+            )
+            //            .postFilter(
+            //            )
+            .sortByFieldDesc("datetime")
+        )
+      )
+
+      info(resp.result.to[StockTimeSerieModel.Info].toString())
+
     }
 
   }
