@@ -53,6 +53,8 @@ object StockFutunBehavior extends ActorSerializerSuport {
 
   final case object Shutdown extends Command
 
+  final case object Reload extends Command
+
   final case object SocketComplete extends Command
 
   def apply(): Behavior[BaseSerializer] =
@@ -87,6 +89,11 @@ object StockFutunBehavior extends ActorSerializerSuport {
             Behaviors.receiveMessage {
               case e @ Run(l) => {
                 logger.info(e.logJson)
+                Behaviors.same
+              }
+              case e @ Reload => {
+                logger.info(e.logJson)
+                context.self.tell(Interval())
                 Behaviors.same
               }
               case e @ Interval() => {
